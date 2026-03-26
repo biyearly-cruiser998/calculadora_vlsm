@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Calculadora VLSM</title>
+
+    <style>
+        * {
+            font-family: 'Hack Nerd Font', monospace;
+        }
+
+        @font-face {
+            font-family: 'Hack Nerd Font';
+            src: url('HackNerdFont-Regular.ttf') format('truetype');
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Hack Nerd Font', monospace;
+            /*font-family: monospace;*/
+            background: #0f1115;
+            color: white;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+            padding: 30px;
+        }
+
+        h1 {
+            text-align: center;
+        }
+
+        .description {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #1a1d23;
+            color: white;
+        }
+
+        button {
+            margin-top: 10px;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: #2ecc71;
+            color: black;
+            cursor: pointer;
+        }
+
+        .network {
+            display: flex;
+            gap: 10px;
+        }
+
+        .card {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #333;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
+
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid gray;
+            color: gray;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .item {
+            border: 1px solid #333;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .label {
+            color: #777;
+            font-size: 12px;
+        }
+
+        .value {
+            font-weight: bold;
+            margin-top: 6px;
+        }
+
+        .toggle {
+            cursor: pointer;
+            color: #2ecc71;
+            margin-top: 10px;
+        }
+
+        .binary-container,
+        .table-container {
+            overflow: hidden;
+            max-height: 0;
+            transition: max-height 0.4s ease;
+        }
+
+        .open {
+            max-height: 500px;
+        }
+
+        .binary-line {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+        }
+
+        .octet {
+            width: 90px;
+            text-align: center;
+        }
+
+        .blue {
+            color: #5dade2;
+            font-weight: bold;
+        }
+
+        .white {
+            color: #ccc;
+            font-weight: bold;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .table th,
+        .table td {
+            border: 1px solid #333;
+            padding: 6px;
+            text-align: center;
+        }
+
+        .table th {
+            color: #888;
+        }
+
+        .green {
+            border-color: #2ecc71;
+            color: #2ecc71;
+        }
+
+        .scrollable {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .table-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+
+        .table-container.open {
+            max-height: 500px;
+        }
+
+        .table-container.scroll {
+            overflow-y: auto;
+        }
+
+        .small {
+            font-size: 13px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>Calculadora de VLSM</h1>
+        <div class="description">
+            Segmentación avanzada de redes con VLSM y visualización completa.
+        </div>
+
+        <input id="baseIP" placeholder="ej: 192.168.1.0/24">
+        <br><br>
+        <div class="small">(Formato: IP/CIDR)</div>
+
+        <div id="networks"></div>
+
+        <button onclick="addNetwork()">Añadir red</button>
+        <button onclick="calculate()">Calcular</button>
+
+        <div id="results"></div>
+
+        <div id="hostsSection" style="display:none;">
+            <h3>VER HOSTS DE SUBRED</h3>
+
+            <select id="subnetSelect">
+                <option value="">-- Selecciona una subred --</option>
+            </select>
+
+            <div class="toggle" onclick="toggleTable()">▶ Ver tabla de hosts</div>
+            <div id="tableContainer" class="table-container scrollable"></div>
+        </div>
+
+    </div>
+
+    <script>
+
+        let subnetsData = [];
+
+        window.onload = () => {
+            document.getElementById("baseIP").value = "";
+            addNetwork();
+        };
+
+        function addNetwork() {
+            let div = document.createElement("div");
+            div.className = "network";
+            div.innerHTML = `
+        <input placeholder="Nombre red (ej: directiva)">
+        <input type="number" placeholder="Hosts (ej: 10)">
+    `;
+            document.getElementById("networks").appendChild(div);
+        }
+
+        function getIPClass(ip) {
+            let first = parseInt(ip.split(".")[0]);
+
+            if (first >= 0 && first <= 127) return "Clase A";
+            if (first >= 128 && first <= 191) return "Clase B";
+            if (first >= 192 && first <= 223) return "Clase C";
+            return "Clase desconocida";
+        }
+
+        function isPrivateIP(ip) {
+            let [a, b] = ip.split(".").map(Number);
+
+            if (a === 10) return true;
+            if (a === 172 && b >= 16 && b <= 31) return true;
+            if (a === 192 && b === 168) return true;
+
+            return false;
+        }
+
+        function ipToInt(ip) {
+            return ip.split('.').reduce((a, o) => (a << 8) + +o, 0);
+        }
+
+        function intToIp(int) {
+            return [(int >>> 24), (int >> 16 & 255), (int >> 8 & 255), (int & 255)].join('.');
+        }
+
+        function toBinary(ip) {
+            return ip.split('.').map(o => parseInt(o).toString(2).padStart(8, '0'));
+        }
+
+        function calculateCIDR(h) {
+            return 32 - Math.ceil(Math.log2(h + 2));
+        }
+
+        function toggleBinary(id) {
+            document.getElementById(id).classList.toggle("open");
+        }
+
+        function toggleTable() {
+            document.getElementById("tableContainer").classList.toggle("open");
+        }
+
+        function calculate() {
+
+            let base = document.getElementById("baseIP").value;
+            if (!base.includes("/")) return alert("Formato incorrecto");
+
+            let [ip] = base.split("/");
+            let current = ipToInt(ip);
+
+            let nets = [];
+            document.querySelectorAll(".network").forEach(n => {
+                let name = n.children[0].value;
+                let hosts = +n.children[1].value;
+                if (hosts) nets.push({ name, hosts });
+            });
+
+            nets.sort((a, b) => b.hosts - a.hosts);
+
+            let html = "";
+            subnetsData = [];
+
+            // 👇 opción por defecto obligatoria
+            let selectHTML = `<option value="">-- Selecciona una subred --</option>`;
+
+            nets.forEach((n, i) => {
+
+                let cidr = calculateCIDR(n.hosts);
+                let size = 2 ** (32 - cidr);
+
+                let net = current;
+                let broadcast = current + size - 1;
+                let first = net + 1;
+                let last = broadcast - 1;
+
+                let usable = size - 2;
+                let sobrantes = usable - n.hosts;
+
+                let id = "bin" + i;
+
+                let ipBin = toBinary(intToIp(net));
+                let maskBin = toBinary(intToIp((0xffffffff << (32 - cidr)) >>> 0));
+                let broadBin = toBinary(intToIp(broadcast));
+
+                let ipStr = intToIp(net);
+                let ipClass = getIPClass(ipStr);
+                let isPrivate = isPrivateIP(ipStr);
+
+                html += `
+        <div class="card">
+
+            <div class="badges">
+                <div class="badge">${ipClass}</div>
+                <div class="badge ${isPrivate ? 'green' : ''}">
+                    ${isPrivate ? 'Red privada' : 'Red pública'}
+                </div>
+            <div class="badge">/${cidr}</div>
+            <div class="badge">${n.name}</div>
+        </div>
+
+            <div class="grid">
+                <div class="item"><div class="label">RED</div><div class="value">${intToIp(net)}</div></div>
+                <div class="item"><div class="label">BROADCAST</div><div class="value">${intToIp(broadcast)}</div></div>
+
+                <div class="item"><div class="label">PRIMER HOST</div><div class="value">${intToIp(first)}</div></div>
+                <div class="item"><div class="label">ÚLTIMO HOST</div><div class="value">${intToIp(last)}</div></div>
+
+                <div class="item"><div class="label">HOSTS DISPONIBLES</div><div class="value">${usable}</div></div>
+                <div class="item"><div class="label">HOSTS SOBRANTES</div><div class="value">${sobrantes}</div></div>
+            </div>
+
+            <div class="toggle" onclick="toggleBinary('${id}')">▶ Ver binario</div>
+
+            <div id="${id}" class="binary-container">
+
+                ${["IP", "Máscara", "Broadcast"].map((label, idx) => {
+                    let arr = [ipBin, maskBin, broadBin][idx];
+                    return `
+                    <div class="binary-line">
+                        <div style="width:80px">${label}</div>
+                        ${arr.map((o, j) => `
+                            <div class="octet ${j < 3 ? 'blue' : 'white'}">${o}</div>
+                        `).join("")}
+                    </div>`;
+                }).join("")}
+
+            </div>
+
+        </div>
+        `;
+
+                // guardar datos para tabla
+                subnetsData.push({
+                    name: n.name,
+                    first,
+                    last,
+                    cidr
+                });
+
+                selectHTML += `<option value="${i}">${n.name}</option>`;
+
+                current = broadcast + 1;
+            });
+
+            // pintar resultados
+            document.getElementById("results").innerHTML = html;
+            document.getElementById("subnetSelect").innerHTML = selectHTML;
+
+            // ✅ MOSTRAR sección de hosts (antes estaba oculta)
+            document.getElementById("hostsSection").style.display = "block";
+
+            // ✅ RESET tabla (cerrada y vacía)
+            let table = document.getElementById("tableContainer");
+            table.classList.remove("open");
+            table.innerHTML = "";
+
+            // ✅ RESET selector (forzar elección)
+            document.getElementById("subnetSelect").value = "";
+        }
+
+        document.getElementById("subnetSelect").addEventListener("change", generateTable);
+
+        function generateTable() {
+
+            let i = document.getElementById("subnetSelect").value;
+
+            if (i === "") {
+                document.getElementById("tableContainer").innerHTML = "";
+                return;
+            }
+
+            let s = subnetsData[i];
+
+            let html = `<table class="table">
+    <tr><th>#</th><th>IP</th></tr>`;
+
+            let count = 0;
+
+            for (let ip = s.first; ip <= s.last; ip++) {
+                html += `<tr><td>${++count}</td><td>${intToIp(ip)}/${s.cidr}</td></tr>`;
+                if (count > 500) break;
+            }
+
+            html += "</table>";
+
+            let container = document.getElementById("tableContainer");
+            container.innerHTML = html;
+
+            // 👇 activar scroll SOLO si hace falta
+            if (count > 20) {
+                container.classList.add("scroll");
+            } else {
+                container.classList.remove("scroll");
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>
